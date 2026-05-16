@@ -275,7 +275,7 @@ function onCreateTypeChange(){
             '</div>';
         }
         a.innerHTML=h;
-        document.getElementById('cAnswerSelect').innerHTML='<option value="">-- Pilih --option><option value="urutan">Format: 2-1-4-3</option>';
+        document.getElementById('cAnswerSelect').innerHTML='<option value="">-- Pilih --</option><option value="urutan">Format: 2-1-4-3</option>';
     } 
     else { // PG
         var l=getOptLetters();
@@ -323,41 +323,115 @@ function saveQuestion(){
 function renderQuestions(c){c.innerHTML='<div class="fade-in card"><h3 class="font-display text-lg font-bold text-light mb-4"><i class="fas fa-list mr-2 text-danger"></i>Bank Soal PAJ</h3><div class="filter-bar"><select id="sfMapelQ" class="input-field flex-1" onchange="renderBankFiltered()">'+makeMapelOpt('')+'</select></div><div id="bankList" class="space-y-2 max-h-[70vh] overflow-y-auto pr-2"></div></div>';renderBankFiltered();}
 function renderBankFiltered(){var ct=document.getElementById('bankList');if(!ct)return;var list=getQuestions();var mapelEl=document.getElementById('sfMapelQ');if(mapelEl&&mapelEl.value)list=list.filter(function(q){return q.mapel===mapelEl.value;});if(!list.length){ct.innerHTML='<p class="text-center text-muted py-10">Tidak ada soal</p>';return;}ct.innerHTML=list.map(function(q){var tc=q.type==='uraian'?'border-info':q.type==='urutan'?'border-info':'border-danger';var tb=q.type==='uraian'?'bg-info/20 text-info':q.type==='urutan'?'bg-info/20 text-info':'bg-danger/20 text-danger';var lb=q.type==='uraian'?'URAIAN':q.type==='urutan'?'URUTAN':'PG';return '<div class="p-3 bg-dark/30 rounded-lg flex justify-between items-start border-l-4 '+tc+' hover:bg-dark/50 transition-colors"><div class="flex-1 pr-4 min-w-0"><div class="flex gap-2 mb-1 flex-wrap"><span class="text-xs px-2 py-0.5 rounded '+tb+' font-semibold">'+lb+'</span><span class="text-xs text-muted">'+getMapelSingkat(q.mapel)+'</span></div><div class="text-sm truncate">'+q.text+'</div></div><div class="flex gap-1 flex-shrink-0"><button onclick="editQuestion(\''+q.id+'\')" class="text-info/60 hover:text-info p-1"><i class="fas fa-pen text-xs"></i></button><button onclick="deleteQuestion(\''+q.id+'\')" class="text-danger/60 hover:text-danger p-1"><i class="fas fa-trash text-xs"></i></button></div></div>';}).join('');}
 
+/* ==================== EDIT SOAL (DIPERBAIKI TOTAL) ==================== */
 function editQuestion(id){
     var q=pajQuestionsAll.find(function(x){return x.id===id});if(!q)return;
-    var opt='';
+    
+    // Bagian Opsi Dinamis
+    var optHtml = '';
     if(q.type==='pg'){
-        opt='<div class="mt-3 pt-3 border-t border-border"><label class="text-xs text-muted mb-2 block">Opsi Jawaban</label>';
+        optHtml='<div class="mt-3 pt-3 border-t border-border"><label class="text-xs text-muted mb-2 block">Opsi Jawaban</label>';
         getOptLetters().forEach(function(L){
             var valOpt=q['opt'+L]||(q.options&&q.options[['A','B','C','D'].indexOf(L)])||'';
             var valImg=q['optImg'+L]||(q.optionImages&&q.optionImages[['A','B','C','D'].indexOf(L)])||'';
-            opt+='<div class="p-3 mb-3 bg-dark/20 border border-border rounded-lg"><div class="flex gap-2 items-center mb-2"><span class="font-bold text-danger w-6 text-center">'+L+'</span><div class="flex-1">'+buildWysiwyg('eOptVal'+L)+'</div></div><div class="flex gap-2 items-center"><input type="text" id="eOptImgUrl'+L+'" class="input-field text-xs flex-1" value="'+escAttr(valImg)+'" placeholder="URL Gambar Opsi"><button onclick="document.getElementById(\'eOptImgFile'+L+'\').click()" class="btn-secondary text-xs py-1.5 px-2 flex-shrink-0"><i class="fas fa-image"></i></button><input type="file" id="eOptImgFile'+L+'" accept="image/*" class="hidden" onchange="handleImageUpload(this,\'eOptImgUrl'+L+'\',\'eOptImgPrev'+L+'\')"></div><div id="eOptImgPrev'+L+'" class="mt-1">'+(valImg?'<img src="'+valImg+'" class="img-preview">':'')+'</div></div>';
+            optHtml+='<div class="p-3 mb-3 bg-dark/20 border border-border rounded-lg"><div class="flex gap-2 items-center mb-2"><span class="font-bold text-danger w-6 text-center">'+L+'</span><div class="flex-1">'+buildWysiwyg('eOptVal'+L)+'</div></div><div class="flex gap-2 items-center"><input type="text" id="eOptImgUrl'+L+'" class="input-field text-xs flex-1" value="'+escAttr(valImg)+'" placeholder="URL Gambar Opsi"><button onclick="document.getElementById(\'eOptImgFile'+L+'\').click()" class="btn-secondary text-xs py-1.5 px-2 flex-shrink-0"><i class="fas fa-image"></i></button><input type="file" id="eOptImgFile'+L+'" accept="image/*" class="hidden" onchange="handleImageUpload(this,\'eOptImgUrl'+L+'\',\'eOptImgPrev'+L+'\')"></div><div id="eOptImgPrev'+L+'" class="mt-1">'+(valImg?'<img src="'+valImg+'" class="img-preview">':'')+'</div></div>';
         });
-        opt+='</div>';
+        optHtml+='</div>';
     } else if(q.type==='urutan'){
-        opt='<div class="mt-3 pt-3 border-t border-border"><label class="text-xs text-muted mb-2 block text-info font-bold">Pernyataan Acak</label>';
+        optHtml='<div class="mt-3 pt-3 border-t border-border"><label class="text-xs text-muted mb-2 block text-info font-bold">Pernyataan Acak</label>';
         var stmts = q.statements || [];
         for(var i=1; i<=6; i++){
-            var val = stmts[i-1] || '';
-            opt+='<div class="p-3 mb-3 bg-dark/20 border border-info/30 rounded-lg"><div class="flex gap-2 items-center mb-2"><span class="font-bold text-info w-6 text-center">'+i+'.</span><div class="flex-1">'+buildWysiwyg('eUrt'+i)+'</div></div></div>';
+            optHtml+='<div class="p-3 mb-3 bg-dark/20 border border-info/30 rounded-lg"><div class="flex gap-2 items-center mb-2"><span class="font-bold text-info w-6 text-center">'+i+'.</span><div class="flex-1">'+buildWysiwyg('eUrt'+i)+'</div></div></div>';
         }
-        opt+='</div>';
+        optHtml+='</div>';
     }
+
+    // Modal lengkap dengan Mapel, Tipe, TP, Indikator, Difficulty
+    openModal('<h3 class="font-display text-lg font-bold text-light mb-4">Edit Soal PAJ</h3>'+
+        '<div class="space-y-3">'+
+            '<div class="grid md:grid-cols-2 gap-4">'+
+                '<div><label class="text-xs text-muted mb-1 block">Mapel</label><select id="eMapel" class="input-field" onchange="updateEditTPDropdown()">'+makeMapelOpt(q.mapel)+'</select></div>'+
+                '<div><label class="text-xs text-muted mb-1 block">Tipe Soal</label><select id="eType" class="input-field" disabled><option value="pg" '+(q.type==='pg'?'selected':'')+'>Pilihan Ganda</option><option value="urutan" '+(q.type==='urutan'?'selected':'')+'>Menjodohkan / Urutan</option><option value="uraian" '+(q.type==='uraian'?'selected':'')+'>Uraian</option></select></div>'+
+            '</div>'+
+            '<div class="grid md:grid-cols-2 gap-4">'+
+                '<div><label class="text-xs text-muted mb-1 block">Difficulty</label><select id="eDiff" class="input-field"><option '+(q.difficulty==='Mudah'?'selected':'')+'>Mudah</option><option '+(q.difficulty==='Sedang'?'selected':'')+'>Sedang</option><option '+(q.difficulty==='Sulit'?'selected':'')+'>Sulit</option></select></div>'+
+                '<div><label class="text-xs text-muted mb-1 block">Skor</label><input type="number" id="eScore" class="input-field" value="'+(q.score||1)+'" min="1"></div>'+
+            '</div>'+
+            '<div><label class="text-xs text-muted mb-1 block">TP</label><select id="eTPSelect" class="input-field mb-2"><option value="">-- Pilih TP --</option></select><textarea id="eTPManual" class="input-field" rows="2" placeholder="Atau tulis manual...">'+escHtml(q.tp||'')+'</textarea></div>'+
+            '<div><label class="text-xs text-muted mb-1 block">Indikator</label><textarea id="eIndicator" class="input-field" rows="2">'+escHtml(q.indicator||'')+'</textarea></div>'+
+            '<div><label class="text-xs text-muted mb-1 block">Teks Soal</label>'+buildWysiwyg('eText')+'</div>'+
+            '<div><label class="text-xs text-muted mb-1 block">Gambar Soal (URL)</label><input type="text" id="eImg" class="input-field" value="'+escAttr(q.image||'')+'"></div>'+
+            optHtml+
+            '<div><label class="text-xs text-muted mb-1 block">Kunci Jawaban</label><input type="text" id="eAnswer" class="input-field" value="'+escAttr(q.answer||q.correctKey||'')+'" placeholder="A/B/C/D atau format urutan"></div>'+
+        '</div>'+
+        '<div class="flex justify-end gap-3 pt-4 mt-4 border-t border-border"><button onclick="closeModal()" class="btn-secondary">Batal</button><button onclick="doUpdateQuestion(\''+id+'\')" class="btn-primary">Simpan Perubahan</button></div>'
+    );
     
-    openModal('<h3 class="font-display text-lg font-bold text-light mb-4">Edit Soal PAJ</h3><div class="space-y-3"><div><label class="text-xs text-muted mb-1 block">Teks Soal</label>'+buildWysiwyg('eText')+'</div><div><label class="text-xs text-muted mb-1 block">Gambar Soal (URL)</label><input type="text" id="eImg" class="input-field" value="'+escAttr(q.image||'')+'"></div>'+opt+'<div class="grid grid-cols-2 gap-4"><div><label class="text-xs text-muted mb-1 block">Kunci</label><input type="text" id="eAnswer" class="input-field" value="'+escAttr(q.answer||q.correctKey||'')+'"></div><div><label class="text-xs text-muted mb-1 block">Skor</label><input type="number" id="eScore" class="input-field" value="'+(q.score||1)+'" min="1"></div></div></div><div class="flex justify-end gap-3 pt-4 mt-4 border-t border-border"><button onclick="closeModal()" class="btn-secondary">Batal</button><button onclick="doUpdateQuestion(\''+id+'\')" class="btn-primary">Simpan</button></div>');
-    
+    // Isi data ke WYSIWYG setelah modal dirender
     setTimeout(function() {
         document.getElementById('eText').innerHTML = q.text || '';
         if(q.type==='pg'){
-            getOptLetters().forEach(function(L){var valOpt=q['opt'+L]||(q.options&&q.options[['A','B','C','D'].indexOf(L)])||'';var el=document.getElementById('eOptVal'+L);if(el)el.innerHTML=valOpt;});
+            getOptLetters().forEach(function(L){
+                var valOpt=q['opt'+L]||(q.options&&q.options[['A','B','C','D'].indexOf(L)])||'';
+                var el=document.getElementById('eOptVal'+L);
+                if(el) el.innerHTML = valOpt;
+            });
         } else if(q.type==='urutan'){
             var stmts = q.statements || [];
-            for(var i=1; i<=6; i++){var el=document.getElementById('eUrt'+i);if(el)el.innerHTML=stmts[i-1]||'';}
+            for(var i=1; i<=6; i++){
+                var el=document.getElementById('eUrt'+i);
+                if(el) el.innerHTML = stmts[i-1] || '';
+            }
         }
-    }, 100);
+        updateEditTPDropdown(); // Load TP berdasarkan mapel yang terpilih
+    }, 150);
 }
 
-function doUpdateQuestion(id){var ansKey=document.getElementById('eAnswer').value.trim().toUpperCase();var q=pajQuestionsAll.find(function(x){return x.id===id});var d={tp:document.getElementById('eTP')?document.getElementById('eTP').value:'',indicator:document.getElementById('eIndicator')?document.getElementById('eIndicator').value:'',text:document.getElementById('eText').innerHTML,image:document.getElementById('eImg').value,answer:ansKey,correctKey:ansKey,score:parseInt(document.getElementById('eScore').value)||1};if(q.type==='pg'){getOptLetters().forEach(function(L){d['opt'+L]=document.getElementById('eOptVal'+L)?document.getElementById('eOptVal'+L).innerHTML.trim():'';d['optImg'+L]=document.getElementById('eOptImgUrl'+L)?document.getElementById('eOptImgUrl'+L).value.trim():'';});}else if(q.type==='urutan'){d.statements=[];for(var i=1;i<=6;i++){var el=document.getElementById('eUrt'+i);if(el&&el.innerHTML.trim()&&el.innerHTML.trim()!=='<br>')d.statements.push(el.innerHTML.trim());}}dbPAJ.collection('questions_paj').doc(id).update(d).then(function(){showToast('Diperbarui!');closeModal();}).catch(function(){showToast('Gagal','error');});}
+// Helper untuk load dropdown TP di dalam modal edit
+function updateEditTPDropdown(){
+    var m=document.getElementById('eMapel');if(!m)return;var mv=m.value;if(!mv)return;
+    var r=getTPs().filter(function(t){return t.mapel===mv;});var s=document.getElementById('eTPSelect');if(!s)return;
+    s.innerHTML='<option value="">-- Pilih TP --</option>';
+    r.forEach(function(t){var sh=t.text.length>80?t.text.substring(0,80)+'...':t.text;s.innerHTML+='<option value="'+escHtml(t.text)+'">'+escHtml(sh)+'</option>';});
+}
+
+// Fungsi simpan update yang diperbaiki
+function doUpdateQuestion(id){
+    var q=pajQuestionsAll.find(function(x){return x.id===id});if(!q)return;
+    var ansKey=document.getElementById('eAnswer').value.trim().toUpperCase();
+    
+    var d={
+        mapel: document.getElementById('eMapel').value,
+        difficulty: document.getElementById('eDiff').value,
+        score: parseInt(document.getElementById('eScore').value)||1,
+        tp: (document.getElementById('eTPManual').value||document.getElementById('eTPSelect').value||'').trim(),
+        indicator: document.getElementById('eIndicator').value.trim(),
+        text: document.getElementById('eText').innerHTML.trim(),
+        image: document.getElementById('eImg').value.trim(),
+        answer: ansKey,
+        correctKey: ansKey
+    };
+    
+    if(q.type==='pg'){
+        getOptLetters().forEach(function(L){
+            d['opt'+L]=document.getElementById('eOptVal'+L)?document.getElementById('eOptVal'+L).innerHTML.trim():'';
+            d['optImg'+L]=document.getElementById('eOptImgUrl'+L)?document.getElementById('eOptImgUrl'+L).value.trim():'';
+        });
+    } else if(q.type==='urutan'){
+        d.statements=[];
+        for(var i=1;i<=6;i++){
+            var el=document.getElementById('eUrt'+i);
+            if(el&&el.innerHTML.trim()&&el.innerHTML.trim()!=='<br>') d.statements.push(el.innerHTML.trim());
+        }
+    }
+    
+    dbPAJ.collection('questions_paj').doc(id).update(d).then(function(){
+        showToast('Soal berhasil diperbarui!');closeModal();
+    }).catch(function(e){
+        showToast('Gagal memperbarui: '+e.message,'error');
+    });
+}
+
 function deleteQuestion(id){if(!confirm('Hapus soal PAJ ini?'))return;dbPAJ.collection('questions_paj').doc(id).delete().then(function(){showToast('Dihapus');}).catch(function(){showToast('Gagal','error');});}
 
 /* ==================== CETAK SOAL (DENGAN URUTAN) ==================== */

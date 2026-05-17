@@ -34,6 +34,8 @@ body{font-family:'Source Sans 3',sans-serif;background:#0f1923;color:#e8ecf1;min
 .btn-danger:hover{background:#ef4444;color:white}
 .btn-info{background:transparent;border:1px solid #06b6d4;color:#06b6d4;padding:8px 16px;border-radius:8px;cursor:pointer;transition:all .2s;font-size:13px}
 .btn-info:hover{background:#06b6d4;color:white}
+.btn-warning{background:transparent;border:1px solid #f59e0b;color:#f59e0b;padding:8px 16px;border-radius:8px;cursor:pointer;transition:all .2s;font-size:13px}
+.btn-warning:hover{background:#f59e0b;color:white}
 .input-field{background:#0f1923;border:1px solid #2a3f5f;color:#e8ecf1;padding:10px 14px;border-radius:8px;width:100%;font-size:14px;transition:border-color .2s}
 .input-field:focus{outline:none;border-color:#ef4444;box-shadow:0 0 0 2px rgba(239,68,68,0.15)}
 .input-field option{background:#182538;color:#e8ecf1}
@@ -202,12 +204,10 @@ function escHtml(s){if(!s)return'';var d=document.createElement('div');d.textCon
 function escAttr(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/'/g,'&#39;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function hasValidKecId(doc){return doc.kecamatanId&&doc.kecamatanId.trim()!==''&&doc.kecamatanId!=='undefined';}
 
-// Fungsi Pembasmi Enter Copas (Merapikan Opsi PG & Soal Urutan Menjadi 1 Baris)
 function cleanInlineText(html) {
     if (!html) return '';
     return html.replace(/<br\s*\/?>/gi, ' ').replace(/<\/p>/gi, ' ').replace(/<\/div>/gi, ' ').replace(/<p[^>]*>/gi, '').replace(/<div[^>]*>/gi, '').replace(/\n/g, ' ').replace(/\s{2,}/g, ' ').trim();
 }
-// Fungsi Pemblokir Tombol Enter di Editor Opsi
 function blockEnter(e) { if (e.key === 'Enter') { e.preventDefault(); return false; } }
 
 var currentUser=null,kecamatanList=[],pajQuestionsAll=[],pajStudentsAll=[],tujuanPembelajaran=[];
@@ -255,11 +255,109 @@ document.getElementById('sidebarNav').addEventListener('click',function(e){var i
 function renderDashboard(c){if(currentUser.isSuper){renderSuperDashboard(c);return;}var mp=getQuestions(),ms=getStudents(),mt=getTPs(),ts=0,bp=0,bu=0;mp.forEach(function(q){ts+=(q.score||0);if(q.type==='pg'||q.type==='urutan')bp++;else bu++;});c.innerHTML='<div class="fade-in grid grid-cols-2 md:grid-cols-4 gap-4"><div class="card col-span-full border-l-4 border-danger"><div class="flex items-center gap-3 mb-1"><i class="fas fa-map-marker-alt text-danger"></i><span class="font-bold text-light">'+escHtml(currentUser.kecNama)+'</span></div><p class="text-xs text-muted">PJ: '+escHtml(currentUser.kecPJ)+'</p></div><div class="card text-center border-l-4 border-danger"><div class="text-3xl font-bold text-danger">'+mp.length+'</div><div class="text-xs text-muted mt-1">Soal</div></div><div class="card text-center border-l-4 border-info"><div class="text-3xl font-bold text-info">'+bp+'</div><div class="text-xs text-muted mt-1">Objektif</div></div><div class="card text-center border-l-4 border-warning"><div class="text-3xl font-bold text-warning">'+bu+'</div><div class="text-xs text-muted mt-1">Uraian</div></div><div class="card text-center border-l-4 border-purple"><div class="text-3xl font-bold text-purple">'+ms.length+'</div><div class="text-xs text-muted mt-1">Siswa</div></div></div>';}
 function renderSuperDashboard(c){var html='<div class="fade-in"><div class="card mb-6 border-l-4 border-purple"><p class="text-sm font-semibold text-purple"><i class="fas fa-crown mr-2"></i>Super Admin — '+kecamatanList.length+' Kecamatan</p></div>';if(!kecamatanList.length){html+='<div class="card text-center py-16"><p class="text-muted">Belum ada kecamatan</p></div>';}else{kecamatanList.forEach(function(kec){var qk=getQuestions(kec.id),sk=getStudents(kec.id),tk=getTPs(kec.id);html+='<div class="kec-separator mb-4"><div class="flex items-center gap-3 mb-3"><div class="w-9 h-9 rounded-lg bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center flex-shrink-0"><i class="fas fa-map-marker-alt text-white"></i></div><div class="flex-1 min-w-0"><h3 class="font-bold text-light text-base">'+escHtml(kec.nama)+'</h3><p class="text-xs text-muted"><i class="fas fa-user mr-1"></i>'+escHtml(kec.pj)+'</p></div></div><div class="grid grid-cols-3 gap-3"><div class="bg-dark/40 rounded-lg p-3 text-center"><div class="text-xl font-bold text-danger">'+qk.length+'</div><div class="text-xs text-muted">Soal</div></div><div class="bg-dark/40 rounded-lg p-3 text-center"><div class="text-xl font-bold text-purple">'+sk.length+'</div><div class="text-xs text-muted">Siswa</div></div><div class="bg-dark/40 rounded-lg p-3 text-center"><div class="text-xl font-bold text-kopAccent">'+tk.length+'</div><div class="text-xs text-muted">TP</div></div></div></div>';});}html+='</div>';c.innerHTML=html;}
 
-/* ==================== DATA SISWA ==================== */
-function renderDataSiswa(c){if(!currentUser.isSuper){c.innerHTML='<div class="fade-in card text-center py-16"><i class="fas fa-lock text-4xl mb-4 block text-danger"></i></div>';return;}c.innerHTML='<div class="fade-in card"><h3 class="font-display text-lg font-bold text-light mb-4"><i class="fas fa-users mr-2 text-purple"></i>Data Siswa PAJ</h3><div class="filter-bar"><div class="flex-1 min-w-[120px]"><label class="text-xs text-muted mb-1 block">NPSN</label><input type="text" id="sfNPSN" class="input-field text-xs" placeholder="Cari NPSN" oninput="renderSiswaList()"></div><div class="flex-1 min-w-[140px]"><label class="text-xs text-muted mb-1 block">Sekolah</label><input type="text" id="sfSekolah" class="input-field text-xs" placeholder="Cari Sekolah" oninput="renderSiswaList()"></div></div><div id="siswaListContainer" class="space-y-2 max-h-[60vh] overflow-y-auto pr-2"></div></div>';renderSiswaList();}
-function renderSiswaList(){var ct=document.getElementById('siswaListContainer');if(!ct)return;var list=getStudents();var fNPSN=(document.getElementById('sfNPSN')||{}).value||'';if(fNPSN)list=list.filter(function(s){return(s.npsn||'').toLowerCase().indexOf(fNPSN.toLowerCase())>-1;});var fSekolah=(document.getElementById('sfSekolah')||{}).value||'';if(fSekolah)list=list.filter(function(s){return(s.namaSekolah||'').toLowerCase().indexOf(fSekolah.toLowerCase())>-1;});if(!list.length){ct.innerHTML='<p class="text-center text-muted py-10">Tidak ada data siswa</p>';return;}ct.innerHTML=list.map(function(s){return '<div class="p-3 bg-dark/30 rounded-lg flex flex-wrap justify-between items-start border-l-4 border-purple hover:bg-dark/50 transition-colors gap-2"><div class="flex-1 min-w-0 pr-2"><p class="text-sm font-bold text-light">'+escHtml(s.nama)+'</p><p class="text-xs text-muted">'+escHtml(s.namaSekolah||'-')+' | NISN: '+escHtml(s.nisn||'-')+'</p></div><div class="flex gap-1 flex-shrink-0"><button onclick="resetLoginSiswa(\''+s.id+'\')" class="btn-info text-xs py-1 px-2"><i class="fas fa-sync-alt"></i></button><button onclick="deleteSiswa(\''+s.id+'\')" class="btn-danger text-xs py-1 px-2"><i class="fas fa-trash"></i></button></div></div>';}).join('');}
-function resetLoginSiswa(id){var s=pajStudentsAll.find(function(x){return x.id===id});if(!s)return;if(!confirm('Reset sesi login ujian untuk siswa "'+s.nama+'"?'))return;dbSAT.collection('students').doc(id).update({examSessionId:firebase.firestore.FieldValue.delete(),activeToken:firebase.firestore.FieldValue.delete(),isTakingExam:false}).then(function(){showToast('Sesi login berhasil direset!','success');}).catch(function(){showToast('Sesi siswa dibersihkan!','success');});}
-function deleteSiswa(id){var s=pajStudentsAll.find(function(x){return x.id===id});if(!s)return;if(!confirm('HAPUS siswa "'+s.nama+'"?'))return;dbSAT.collection('students').doc(id).delete().then(function(){showToast('Siswa dihapus');}).catch(function(){showToast('Gagal','error');});}
+/* ==================== DATA SISWA (SUPER ADMIN FOKUS) ==================== */
+function renderDataSiswa(c){
+    if(!currentUser.isSuper){c.innerHTML='<div class="fade-in card text-center py-16"><i class="fas fa-lock text-4xl mb-4 block text-danger"></i></div>';return;}
+    c.innerHTML='<div class="fade-in card"><h3 class="font-display text-lg font-bold text-light mb-4"><i class="fas fa-users mr-2 text-purple"></i>Data Siswa PAJ</h3><div class="filter-bar"><div class="flex-1 min-w-[120px]"><label class="text-xs text-muted mb-1 block">NPSN</label><input type="text" id="sfNPSN" class="input-field text-xs" placeholder="Cari NPSN" oninput="renderSiswaList()"></div><div class="flex-1 min-w-[140px]"><label class="text-xs text-muted mb-1 block">Sekolah</label><input type="text" id="sfSekolah" class="input-field text-xs" placeholder="Cari Sekolah" oninput="renderSiswaList()"></div></div><div id="siswaListContainer" class="space-y-2 max-h-[65vh] overflow-y-auto pr-2"></div></div>';
+    renderSiswaList();
+}
+
+function renderSiswaList(){
+    var ct=document.getElementById('siswaListContainer');if(!ct)return;
+    var list=pajStudentsAll; 
+    var fNPSN=(document.getElementById('sfNPSN')||{}).value||'';if(fNPSN)list=list.filter(function(s){return(s.npsn||'').toLowerCase().indexOf(fNPSN.toLowerCase())>-1;});
+    var fSekolah=(document.getElementById('sfSekolah')||{}).value||'';if(fSekolah)list=list.filter(function(s){return(s.namaSekolah||'').toLowerCase().indexOf(fSekolah.toLowerCase())>-1;});
+    if(!list.length){ct.innerHTML='<p class="text-center text-muted py-10">Tidak ada data siswa</p>';return;}
+    
+    ct.innerHTML=list.map(function(s){
+        var kecNama = 'N/A';
+        var k = kecamatanList.find(function(x){return x.id===s.kecamatanId;});
+        if(k) kecNama = k.nama;
+        
+        return '<div class="p-3 bg-dark/30 rounded-lg flex flex-wrap justify-between items-start border-l-4 border-purple hover:bg-dark/50 transition-colors gap-2">'+
+            '<div class="flex-1 min-w-0 pr-2">'+
+                '<p class="text-sm font-bold text-light">'+escHtml(s.nama)+'</p>'+
+                '<p class="text-xs text-muted">'+escHtml(s.namaSekolah||'-')+' | NISN: '+escHtml(s.nisn||'-')+' | NPSN: '+escHtml(s.npsn||'-')+'</p>'+
+                '<p class="text-xs text-purple mt-1"><i class="fas fa-map-marker-alt mr-1"></i>'+escHtml(kecNama)+'</p>'+
+            '</div>'+
+            '<div class="flex gap-1 flex-shrink-0">'+
+                '<button onclick="editSiswa(\''+s.id+'\')" class="btn-warning text-xs py-1 px-2" title="Edit Siswa"><i class="fas fa-pen"></i></button>'+
+                '<button onclick="resetLoginSiswa(\''+s.id+'\')" class="btn-info text-xs py-1 px-2" title="Reset Login"><i class="fas fa-sync-alt"></i></button>'+
+                '<button onclick="deleteSiswa(\''+s.id+'\')" class="btn-danger text-xs py-1 px-2" title="Hapus Siswa"><i class="fas fa-trash"></i></button>'+
+            '</div>'+
+        '</div>';
+    }).join('');
+}
+
+function editSiswa(id){
+    var s=pajStudentsAll.find(function(x){return x.id===id});
+    if(!s)return;
+    openModal('<h3 class="font-display text-lg font-bold text-light mb-4">Edit Data Siswa</h3>'+
+    '<div class="space-y-4">'+
+        '<div><label class="text-xs text-muted mb-1 block">Nama Siswa</label><input type="text" id="eSiswaNama" class="input-field" value="'+escAttr(s.nama||'')+'"></div>'+
+        '<div><label class="text-xs text-muted mb-1 block">NISN</label><input type="text" id="eSiswaNisn" class="input-field" value="'+escAttr(s.nisn||'')+'"></div>'+
+        '<div><label class="text-xs text-muted mb-1 block">NPSN</label><input type="text" id="eSiswaNpsn" class="input-field" value="'+escAttr(s.npsn||'')+'"></div>'+
+        '<div><label class="text-xs text-muted mb-1 block">Nama Sekolah</label><input type="text" id="eSiswaSekolah" class="input-field" value="'+escAttr(s.namaSekolah||'')+'"></div>'+
+        '<div><label class="text-xs text-muted mb-1 block">Kecamatan</label><select id="eSiswaKec" class="input-field">'+makeKecOpt(s.kecamatanId||'')+'</select></div>'+
+        '<div class="flex justify-end gap-3 pt-2"><button onclick="closeModal()" class="btn-secondary">Batal</button><button onclick="doUpdateSiswa(\''+id+'\')" class="btn-primary">Simpan</button></div>'+
+    '</div>');
+}
+
+function doUpdateSiswa(id){
+    var d={
+        nama: document.getElementById('eSiswaNama').value.trim(),
+        nisn: document.getElementById('eSiswaNisn').value.trim(),
+        npsn: document.getElementById('eSiswaNpsn').value.trim(),
+        namaSekolah: document.getElementById('eSiswaSekolah').value.trim(),
+        kecamatanId: document.getElementById('eSiswaKec').value
+    };
+    if(!d.nama){showToast('Nama tidak boleh kosong','error');return;}
+    
+    // Super Admin mengedit di dbSAT, selain itu di dbPAJ
+    var dbTarget = currentUser.isSuper ? dbSAT : dbPAJ;
+    var colName = currentUser.isSuper ? 'students' : 'students_paj';
+    
+    dbTarget.collection(colName).doc(id).update(d).then(function(){
+        showToast('Data siswa berhasil diperbarui!');
+        closeModal();
+    }).catch(function(e){
+        showToast('Gagal memperbarui: '+e.message,'error');
+    });
+}
+
+function resetLoginSiswa(id){
+    var s=pajStudentsAll.find(function(x){return x.id===id});
+    if(!s)return;
+    if(!confirm('Reset sesi login ujian untuk siswa "'+s.nama+'"?'))return;
+    
+    var dbTarget = currentUser.isSuper ? dbSAT : dbPAJ;
+    var colName = currentUser.isSuper ? 'students' : 'students_paj';
+    
+    dbTarget.collection(colName).doc(id).update({
+        examSessionId: firebase.firestore.FieldValue.delete(), 
+        activeToken: firebase.firestore.FieldValue.delete(), 
+        isTakingExam: false
+    }).then(function(){
+        showToast('Sesi login berhasil direset!','success');
+    }).catch(function(e){
+        showToast('Gagal mereset: '+e.message,'error');
+    });
+}
+
+function deleteSiswa(id){
+    var s=pajStudentsAll.find(function(x){return x.id===id});
+    if(!s)return;
+    if(!confirm('HAPUS siswa "'+s.nama+'"? Data yang dihapus tidak bisa dikembalikan!'))return;
+    
+    var dbTarget = currentUser.isSuper ? dbSAT : dbPAJ;
+    var colName = currentUser.isSuper ? 'students' : 'students_paj';
+    
+    dbTarget.collection(colName).doc(id).delete().then(function(){
+        showToast('Siswa berhasil dihapus');
+    }).catch(function(e){
+        showToast('Gagal menghapus: '+e.message,'error');
+    });
+}
 
 /* ==================== TP PAJ ==================== */
 function renderTP(c){c.innerHTML='<div class="fade-in card"><div class="flex flex-wrap justify-between items-center mb-4 gap-3"><h3 class="font-display text-lg font-bold text-light"><i class="fas fa-bullseye mr-2 text-kopAccent"></i>TP PAJ</h3><button onclick="openAddTPModal()" class="btn-primary text-sm"><i class="fas fa-plus mr-1"></i>Tambah TP</button></div><div class="filter-bar"><select id="sfMapelTP" class="input-field flex-1" onchange="renderTPList()">'+makeMapelOpt('')+'</select></div><div id="tpListContainer" class="space-y-2 max-h-[65vh] overflow-y-auto pr-2"></div></div>';renderTPList();}
